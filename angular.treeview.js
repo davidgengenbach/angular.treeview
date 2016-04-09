@@ -1,98 +1,111 @@
 /*
-	@license Angular Treeview version 0.1.6
-	ⓒ 2013 AHN JAE-HA http://github.com/eu81273/angular.treeview
-	License: MIT
+    @license Angular Treeview version 0.1.6
+    ⓒ 2013 AHN JAE-HA http://github.com/eu81273/angular.treeview
+    License: MIT
 
 
-	[TREE attribute]
-	angular-treeview: the treeview directive
-	tree-id : each tree's unique id.
-	tree-model : the tree model on $scope.
-	node-id : each node's id
-	node-label : each node's label
-	node-children: each node's children
+    [TREE attribute]
+    angular-treeview: the treeview directive
+    tree-id : each tree's unique id.
+    tree-model : the tree model on $scope.
+    node-id : each node's id
+    node-label : each node's label
+    node-children: each node's children
 
-	<div
-		data-angular-treeview="true"
-		data-tree-id="tree"
-		data-tree-model="roleList"
-		data-node-id="roleId"
-		data-node-label="roleName"
-		data-node-children="children" >
-	</div>
+    <div
+        data-angular-treeview="true"
+        data-tree-id="tree"
+        data-tree-model="roleList"
+        data-node-id="roleId"
+        data-node-label="roleName"
+        data-node-children="children" >
+    </div>
 */
 
-(function ( angular ) {
-	'use strict';
+(function(angular) {
+    'use strict';
 
-	angular.module( 'angularTreeview', [] ).directive( 'treeModel', ['$compile', function( $compile ) {
-		return {
-			restrict: 'A',
-			link: function ( scope, element, attrs ) {
-				//tree id
-				var treeId = attrs.treeId;
-			
-				//tree model
-				var treeModel = attrs.treeModel;
+    angular.module('angularTreeview', []).directive('treeModel', ['$compile', function($compile) {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
+                //tree id
+                var treeId = attrs.treeId;
 
-				//node id
-				var nodeId = attrs.nodeId || 'id';
+                //tree model
+                var treeModel = attrs.treeModel;
 
-				//node label
-				var nodeLabel = attrs.nodeLabel || 'label';
+                //node id
+                var nodeId = attrs.nodeId || 'id';
 
-				//children
-				var nodeChildren = attrs.nodeChildren || 'children';
+                //node label
+                var nodeLabel = attrs.nodeLabel || 'label';
 
-				//tree template
-				var template =
-					'<ul>' +
-						'<li data-ng-repeat="node in ' + treeModel + '">' +
-							'<i class="collapsed" data-ng-show="node.' + nodeChildren + '.length && node.collapsed" data-ng-click="' + treeId + '.selectNodeHead(node)"></i>' +
-							'<i class="expanded" data-ng-show="node.' + nodeChildren + '.length && !node.collapsed" data-ng-click="' + treeId + '.selectNodeHead(node)"></i>' +
-							'<i class="normal" data-ng-hide="node.' + nodeChildren + '.length"></i> ' +
-							'<span data-ng-class="node.selected" data-ng-click="' + treeId + '.selectNodeLabel(node)">{{node.' + nodeLabel + '}}</span>' +
-							'<div data-ng-hide="node.collapsed" data-tree-id="' + treeId + '" data-tree-model="node.' + nodeChildren + '" data-node-id=' + nodeId + ' data-node-label=' + nodeLabel + ' data-node-children=' + nodeChildren + '></div>' +
-						'</li>' +
-					'</ul>';
+                //children
+                var nodeChildren = attrs.nodeChildren || 'children';
+
+                // Labeltemplate
+                // TODO: transclude!
+                var labelTemplate = attrs.labelTemplate || '{{node.' + nodeLabel + '}}';
+                labelTemplate = labelTemplate.replace(/\(\(/g, '{{').replace(/\)\)/g, '}}');
+
+                //tree template
+                var template =
+                    '<ul>' +
+                    '<li data-ng-repeat="node in ' + treeModel + '">' +
+                    '<i class="collapsed" data-ng-show="node.' + nodeChildren + '.length && node.collapsed" data-ng-click="' + treeId + '.selectNodeHead(node)"></i>' +
+                    '<i class="expanded" data-ng-show="node.' + nodeChildren + '.length && !node.collapsed" data-ng-click="' + treeId + '.selectNodeHead(node)"></i>' +
+                    '<i class="normal" data-ng-hide="node.' + nodeChildren + '.length"></i> ' +
+                    '<span data-ng-click="' + treeId + '.selectNode(node)" data-ng-class="node.selected" data-ng-clickx="' + treeId + '.selectNodeLabel(node)">' + labelTemplate + '</span>' +
+                    '<div data-ng-hide="node.collapsed" data-tree-id="' + treeId + '" data-tree-model="node.' + nodeChildren + '" data-node-id=' + nodeId + ' data-node-label=' + nodeLabel + ' data-node-children=' + nodeChildren + ' data-label-template="' + attrs.labelTemplate + '"></div>' +
+                    '</li>' +
+                    '</ul>';
 
 
-				//check tree id, tree model
-				if( treeId && treeModel ) {
+                //check tree id, tree model
+                if (treeId && treeModel) {
 
-					//root node
-					if( attrs.angularTreeview ) {
-					
-						//create tree object if not exists
-						scope[treeId] = scope[treeId] || {};
+                    //root node
+                    if (attrs.angularTreeview) {
 
-						//if node head clicks,
-						scope[treeId].selectNodeHead = scope[treeId].selectNodeHead || function( selectedNode ){
+                        //create tree object if not exists
+                        scope[treeId] = scope[treeId] || {};
 
-							//Collapse or Expand
-							selectedNode.collapsed = !selectedNode.collapsed;
-						};
+                        scope[treeId].selectNode = scope[treeId].selectNode || function(selectedNode) {
+                            // Has children
+                            if (selectedNode[nodeChildren] && selectedNode[nodeChildren].length) {
+                                selectedNode.collapsed = !selectedNode.collapsed;
+                            } else {
+                                scope[treeId].selectNodeLabel(selectedNode);
+                            }
+                        };
 
-						//if node label clicks,
-						scope[treeId].selectNodeLabel = scope[treeId].selectNodeLabel || function( selectedNode ){
+                        //if node head clicks,
+                        scope[treeId].selectNodeHead = scope[treeId].selectNodeHead || function(selectedNode) {
+                            //Collapse or Expand
+                            selectedNode.collapsed = !selectedNode.collapsed;
+                        };
 
-							//remove highlight from previous node
-							if( scope[treeId].currentNode && scope[treeId].currentNode.selected ) {
-								scope[treeId].currentNode.selected = undefined;
-							}
+                        //if node label clicks,
+                        scope[treeId].selectNodeLabel = scope[treeId].selectNodeLabel || function(selectedNode) {
 
-							//set highlight to selected node
-							selectedNode.selected = 'selected';
+                            //remove highlight from previous node
+                            if (scope[treeId].currentNode && scope[treeId].currentNode.selected) {
+                                scope[treeId].currentNode.selected = undefined;
+                            }
 
-							//set currentNode
-							scope[treeId].currentNode = selectedNode;
-						};
-					}
+                            //set highlight to selected node
+                            selectedNode.selected = 'selected';
 
-					//Rendering template.
-					element.html('').append( $compile( template )( scope ) );
-				}
-			}
-		};
-	}]);
-})( angular );
+                            //set currentNode
+                            scope[treeId].currentNode = selectedNode;
+                        };
+                    }
+
+                    //Rendering template.
+                    element.html('').append($compile(template)(scope));
+                }
+            }
+        };
+    }]);
+})(angular);

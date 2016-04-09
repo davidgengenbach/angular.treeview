@@ -52,7 +52,7 @@
                 //tree template
                 var template =
                     '<ul>' +
-                    '<li data-ng-repeat="node in ' + treeModel + '">' +
+                    '<li data-ng-repeat="node in ' + treeModel + '" ng-hide="node.hidden">' +
                     '<i class="collapsed" data-ng-show="node.' + nodeChildren + '.length && node.collapsed" data-ng-click="' + treeId + '.selectNodeHead(node)"></i>' +
                     '<i class="expanded" data-ng-show="node.' + nodeChildren + '.length && !node.collapsed" data-ng-click="' + treeId + '.selectNodeHead(node)"></i>' +
                     '<i class="normal" data-ng-hide="node.' + nodeChildren + '.length"></i> ' +

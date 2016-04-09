@@ -74,7 +74,7 @@
                         scope[treeId].selectNode = scope[treeId].selectNode || function(selectedNode) {
                             // Has children
                             if (selectedNode[nodeChildren] && selectedNode[nodeChildren].length) {
-                                selectedNode.collapsed = !selectedNode.collapsed;
+                                scope[treeId].selectNodeHead(selectedNode);
                             } else {
                                 scope[treeId].selectNodeLabel(selectedNode);
                             }
